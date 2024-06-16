@@ -29,6 +29,11 @@ OpenAIClient client = new OpenAIClient(new Uri(oaiEndpoint), new AzureKeyCredent
 // System message to provide context to the model
 string systemMessage = "I am a hiking enthusiast named Forest who helps people discover hikes in their area. If no area is specified, I will default to near Rainier National Park. I will then provide three suggestions for nearby hikes that vary in length. I will also share an interesting fact about the local nature on the hikes when making a recommendation.";
 
+// Initialize messages list
+var messagesList = new List<ChatRequestMessage>()
+{
+    new ChatRequestSystemMessage(systemMessage),
+};
 
 do {
     Console.WriteLine("Enter your prompt text (or type 'quit' to exit): ");
@@ -46,24 +51,29 @@ do {
     // Add code to send request...
     // Add code to send request...
     // Build completion options object
+    messagesList.Add(new ChatRequestUserMessage(inputText));
+
     ChatCompletionsOptions chatCompletionsOptions = new ChatCompletionsOptions()
     {
-        Messages =
-        {
-            new ChatRequestSystemMessage(systemMessage),
-            new ChatRequestUserMessage(inputText),
-        },
-        MaxTokens = 400,
+        MaxTokens = 1200,
         Temperature = 0.7f,
         DeploymentName = oaiDeploymentName
     };
 
+    // Add messages to the completion options
+    foreach (ChatRequestMessage chatMessage in messagesList)
+    {
+        chatCompletionsOptions.Messages.Add(chatMessage);
+    }
+
     // Send request to Azure OpenAI model
     ChatCompletions response = client.GetChatCompletions(chatCompletionsOptions);
 
-    // Print the response
+    // Return the response
     string completion = response.Choices[0].Message.Content;
+
+    // Add generated text to messages list
+    messagesList.Add(new ChatRequestAssistantMessage(completion));
+
     Console.WriteLine("Response: " + completion + "\n");
-
-
 } while (true);
